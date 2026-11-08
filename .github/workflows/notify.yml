@@ -1,0 +1,26 @@
+name: Gửi từ vựng
+on:
+  schedule:
+    # giờ Việt Nam = UTC+7 → 7,9,11,13,15,17,19,21,22h
+    - cron: "0 0,2,4,6,8,10,12,14,15 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency: notify
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gửi 1 từ
+        env:
+          APP_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: python3 notify/send.py
+      - name: Lưu vị trí từ (giữ kho luôn hoạt động để lịch không bị tắt)
+        run: |
+          git config user.name "kioku-bot"
+          git config user.email "kioku-bot@users.noreply.github.com"
+          git add notify/state.json
+          git commit -m "Từ tiếp theo" || exit 0
+          git pull --rebase || true
+          git push
